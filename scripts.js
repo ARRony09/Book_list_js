@@ -26,8 +26,10 @@ class UI{
         <td><a href='#' class='delete'>X</a></td>`
         console.log(row);
         list.appendChild(row)
+        //storeTaskLocalStorage(list)
         clearInput()
     }
+    
     static clearInput(){
         document.querySelector('#title').value="";
         document.querySelector('#author').value="";
@@ -48,16 +50,57 @@ class UI{
     static deleteFromBook(target){
         if(target.hasAttribute('href')){
             target.parentElement.parentElement.remove();
+            //console.log(target.parentElement.previousElementSibling.textContent);
+            Store.removeBooksFromLS(target.parentElement.previousElementSibling.textContent.trim())
             UI.showAlert('Remove book','success');
         }
     }
         
 }
 
+//Local Storage
+
+class Store{
+    static getBooks(){
+        let books;
+        if(localStorage.getItem('books')===null){
+            books=[];
+        } else {
+            books = JSON.parse(localStorage.getItem('books'));
+        }
+        return books;
+    }
+
+    static addBooks(book){
+        let books=Store.getBooks();
+        books.push(book);
+
+        localStorage.setItem('books',JSON.stringify(books));
+    }
+
+    static displayBooks(){
+        let books=Store.getBooks();
+        books.forEach(book => {
+            UI.addToBookList(book);
+        });
+    }
+    static removeBooksFromLS(isbn){
+        let books=Store.getBooks();
+        
+        books.forEach((book,index) => {
+            if (book.isbn==isbn) {
+                books.splice(index,1);
+            }
+        });
+        localStorage.setItem('books',JSON.stringify(books));
+    }
+}
+
 // addEventListener
 
 form.addEventListener('submit',newBook);
 list.addEventListener('click',removeBook)
+document.addEventListener('DOMContentLoaded',Store.displayBooks());
 
 // Define Function 
 
@@ -74,6 +117,7 @@ function newBook(e){
         let book = new Book(title,author,isbn);
     
         UI.addToBookList(book);
+        Store.addBooks(book)
         UI.clearInput();
         UI.showAlert('Book Added','success');
     }
@@ -85,10 +129,9 @@ function newBook(e){
 function removeBook(e){
     //let ui=new UI();
     UI.deleteFromBook(e.target);
-    
+    Store.removeBooksFromLS(e)
     e.preventDefault()
 }
 function clearInput(){
 
 }
-
